@@ -1,0 +1,10 @@
+.wrap {
+  position: relative;
+
+  .dragImage {
+    position: absolute;
+    top: -100000px;
+    left: -1000000px;
+    transform: translate(0);
+  }
+}

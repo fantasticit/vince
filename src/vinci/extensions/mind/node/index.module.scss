@@ -1,0 +1,18 @@
+.btnWrap {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  transform: translate(0, -50%);
+  margin-left: 4px;
+
+  cursor: pointer;
+
+  z-index: 100;
+
+  opacity: 0;
+
+  &:hover,
+  &.selected {
+    opacity: 1;
+  }
+}
