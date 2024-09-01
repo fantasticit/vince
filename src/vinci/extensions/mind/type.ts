@@ -11,4 +11,5 @@ export type IVinceMindNode = IVinceTextNode<{
   isRoot?: boolean;
   parentId?: string;
   fill: string;
+  stroke: string;
 }>;

@@ -1,8 +1,6 @@
 import {
-  NodeResizer,
   type NodeProps,
   useStore,
-  useKeyPress,
   useReactFlow,
   Handle,
   Position,
@@ -10,60 +8,89 @@ import {
 
 import { IconPlus } from "@douyinfe/semi-icons";
 import cls from "classnames";
+import React, { useCallback } from "react";
 
 import { TextEditor } from "../../../components/text-editor";
+import { useDelaySetState } from "../../../hooks/use-delay-state";
 
 import { IVinceMindNode } from "../type";
+import { patchNodeLayout } from "../util";
 
 import styles from "./index.module.scss";
 
 function useNodeDimensions(id: string) {
   const node = useStore((state) => state.nodeLookup.get(id));
+  console.log(node);
   return {
-    width: node?.measured?.width || 0,
-    height: node?.measured?.height || 0,
+    width: node?.style?.width || node?.measured?.width || 0,
+    height: node?.style?.height || node?.measured?.height || 0,
   };
 }
 
-export function MindNode({ id, selected, data }: NodeProps<IVinceMindNode>) {
-  const { html, fill } = data;
+const PADDING = 5;
+
+export function MindNode({ id, data }: NodeProps<IVinceMindNode>) {
+  const { html, fill, stroke, isRoot } = data;
   const { width, height } = useNodeDimensions(id);
-  const shiftKeyPressed = useKeyPress("Shift");
-  const { setNodes } = useReactFlow();
-  const handleStyle = {};
+  const reactflow = useReactFlow();
 
-  const onTextChange = (html: string) => {
-    setNodes((nodes) =>
-      nodes.map((node) => {
-        if (node.id === id) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              html,
-            },
-          };
-        }
+  const [visible, setVisible] = useDelaySetState(200, false);
 
-        return node;
-      })
-    );
+  const onChange = useCallback(
+    (html: string, size: [number, number]) => {
+      const node = reactflow.getNode(id)!;
+      const width = size[0] + PADDING * 2;
+      const height = size[1] + PADDING * 2;
+
+      if (node.style?.width) {
+        node.style.width = width;
+      }
+      if (node.style?.height) {
+        node.style.height = height;
+      }
+      reactflow.updateNode(id, {
+        style: { ...node.style, width, height },
+        data: {
+          ...node.data,
+          html,
+        },
+      });
+      patchNodeLayout(reactflow, node);
+    },
+    [reactflow, id]
+  );
+
+  const nodeStyle: React.CSSProperties = {
+    boxSizing: "border-box",
+    backgroundColor: isRoot ? fill : "transparent",
+    borderStyle: "solid",
+    borderWidth: isRoot ? 0 : "3px",
+    borderColor: stroke,
+    borderRadius: "4px",
   };
+  const handleStyle = {};
 
   return (
     <>
-      <NodeResizer
-        keepAspectRatio={shiftKeyPressed}
-        color="#3384f5"
-        isVisible={selected}
-      ></NodeResizer>
+      <div
+        className="mind-text-container"
+        style={{
+          width,
+          height,
+          ...nodeStyle,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxSizing: "border-box",
+        }}
+        onMouseEnter={() => setVisible(true, true)}
+        onMouseLeave={() => setVisible(false)}
+      >
+        <TextEditor value={html} onChange={onChange} />
 
-      <div style={{ width, height, backgroundColor: fill }}>
-        <TextEditor value={html} onChange={onTextChange} />
-
-        <div className={cls(styles.btnWrap, selected && styles.selected)}>
+        <div className={cls(styles.btnWrap, visible && styles.selected)}>
           <IconPlus
-            style={{ fontSize: "12px" }}
+            style={{ fontSize: "10px" }}
             className="js-mind-trigger"
             data-mind-id={id}
             data-type="add"

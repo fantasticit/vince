@@ -4,6 +4,7 @@
   left: 100%;
   transform: translate(0, -50%);
   margin-left: 4px;
+  margin-top: -1px;
 
   cursor: pointer;
 
@@ -14,5 +15,16 @@
   &:hover,
   &.selected {
     opacity: 1;
+  }
+
+  :global {
+    .semi-icon {
+      color: #fff;
+      background: #40b4f3;
+      border-radius: 50%;
+      display: inline-block;
+      width: fit-content;
+      height: fit-content;
+    }
   }
 }

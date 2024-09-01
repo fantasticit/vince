@@ -23,6 +23,13 @@ export interface IPlugin {
     e: MouseEvent
   ) => boolean;
 
+  onNodeDoubleClick?: (
+    extensionManager: ExtensionManager,
+    reactFlowInstance: ReactFlowInstance,
+    event: React.MouseEvent,
+    node: Node
+  ) => void;
+
   onNodeDragStart?: (
     extensionManager: ExtensionManager,
     reactFlowInstance: ReactFlowInstance,

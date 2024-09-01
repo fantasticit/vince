@@ -1,12 +1,12 @@
 import { v7 as uuid } from "uuid";
-import { cloneDeep, unionWith } from "lodash";
+import { cloneDeep } from "lodash";
+import { Node } from "@xyflow/react";
 
 import { Extension } from "../../extension-manager";
 
-import { MindNode } from "./node";
-import { getMindRoot, getMindChildren, doLayout } from "./util";
 import { IVinceMindNode } from "./type";
-import { Edge } from "@xyflow/react";
+import { MindNode } from "./node";
+import { getMindRoot, doLayout, patchNodeLayout } from "./util";
 
 export const Mind = Extension.create({
   name: "mind",
@@ -17,9 +17,9 @@ export const Mind = Extension.create({
     return [
       {
         key: "mind",
-        doLayout(extensionManager, reactflow, nodes, edges) {
-          const mindsRoot: Record<string, IVinceMindNode> = {};
-          const minds: Record<string, IVinceMindNode[]> = {};
+        doLayout(_, __, nodes, edges) {
+          const mindsRoot: Record<string, Node> = {};
+          const minds: Record<string, Node[]> = {};
 
           nodes.forEach((node) => {
             if (node.type !== "mind") return;
@@ -36,12 +36,14 @@ export const Mind = Extension.create({
 
           Object.keys(minds).forEach((key) => {
             const rootNode = mindsRoot[key];
-            console.log(rootNode);
-            doLayout(rootNode, minds[key], edges);
+            doLayout(
+              rootNode as IVinceMindNode,
+              minds[key] as IVinceMindNode[],
+              edges
+            );
           });
-          console.log(nodes);
         },
-        handleDrop(extensionManager, reactflow, evt) {
+        handleDrop(_, reactflow, evt) {
           const type = evt.dataTransfer?.getData("vince/drop-to-add-mind");
 
           if (type) {
@@ -52,23 +54,34 @@ export const Mind = Extension.create({
             const node = {
               id: uuid(),
               type: "mind",
+              hidden: false,
               position,
-              style: { width: 80, height: 32 },
+              style: { width: 74, height: 32 },
               data: {
                 originPosition: cloneDeep(position),
                 isRoot: true,
                 layout: "RightLogical",
                 html: "思维导图",
                 fill: "#eff0f0",
+                stroke: "#eff0f0",
               },
             };
-            reactflow.addNodes(node);
+            const nodes = reactflow.getNodes();
+            reactflow.setNodes([
+              ...nodes.map((node) => {
+                return {
+                  ...node,
+                  selected: false,
+                };
+              }),
+              node,
+            ]);
             return true;
           }
 
           return false;
         },
-        handleClick(extensionManager, reactflow, e) {
+        handleClick(_, reactflow, e) {
           const target = (e.nativeEvent.composedPath() as HTMLElement[]).find(
             (el) => {
               return el?.classList?.contains("js-mind-trigger");
@@ -89,50 +102,35 @@ export const Mind = Extension.create({
           const node = {
             id: uuid(),
             type: "mind",
+            hidden: false,
             position,
-            style: { width: 60, height: 32 },
+            style: { width: 64, height: 37 },
             data: {
               parentId: mindId,
               html: "子主题",
               fill: "#eff0f0",
+              stroke: "#eff0f0",
             },
             draggable: false,
+            selected: true,
           };
-          reactflow.addNodes(node);
+          const nodes = reactflow.getNodes();
+
+          reactflow.setNodes([
+            ...nodes.map((node) => {
+              return {
+                ...node,
+                selected: false,
+              };
+            }),
+            node,
+          ]);
           return true;
         },
         onNodeDrag(_, reactflow, __, node) {
           if (node.type === "mind") {
             node.data.originPosition = cloneDeep(node.position);
-
-            const nodes = reactflow.getNodes();
-            const edges = reactflow.getEdges();
-
-            const mindEdges: Edge[] = [];
-            const mindNodes = [
-              node as IVinceMindNode,
-              ...getMindChildren(
-                nodes as IVinceMindNode[],
-                node as IVinceMindNode
-              ),
-            ];
-
-            doLayout(node as IVinceMindNode, mindNodes, mindEdges);
-
-            const newNodes = unionWith(
-              mindNodes,
-              nodes,
-              (node1, node2) => node1.id === node2.id
-            );
-            const newEdges = unionWith(
-              mindEdges,
-              edges,
-              (edge1, edge2) => edge1.id === edge2.id
-            );
-
-            reactflow.setNodes(newNodes);
-            reactflow.setEdges(newEdges);
-
+            patchNodeLayout(reactflow, node);
             return true;
           }
         },

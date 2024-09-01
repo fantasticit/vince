@@ -1,0 +1,21 @@
+.react-flow__handle {
+  opacity: 0;
+  z-index: 10;
+}
+
+.react-flow__handle.connectingto {
+  opacity: 1;
+}
+
+.react-flow__node:not(.react-flow__node-mind).selected .react-flow__handle {
+  opacity: 1;
+}
+
+.ProseMirror {
+  outline: none;
+  white-space: nowrap !important;
+
+  p {
+    margin: 0;
+  }
+}

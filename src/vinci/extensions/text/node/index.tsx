@@ -11,6 +11,9 @@ import {
 
 import { TextEditor } from "../../../components/text-editor";
 
+import styles from "./index.module.scss";
+import { useCallback } from "react";
+
 export type ITextNode = Node<{
   html: string;
 }>;
@@ -23,38 +26,49 @@ function useNodeDimensions(id: string) {
   };
 }
 
+const PADDING = 5;
+
 export function TextNode({ id, selected, data }: NodeProps<ITextNode>) {
   const { html } = data;
   const { width, height } = useNodeDimensions(id);
   const shiftKeyPressed = useKeyPress("Shift");
-  const handleStyle = {};
+  const handleStyle = { backgroundColor: "rgba(102, 152, 255, 0.6)" };
 
-  const { setNodes } = useReactFlow();
+  const reactflow = useReactFlow();
 
-  const onTextChange = (html: string) => {
-    setNodes((nodes) =>
-      nodes.map((node) => {
-        if (node.id === id) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              html,
-            },
-          };
-        }
+  const onChange = useCallback(
+    (html: string, size: [number, number]) => {
+      const node = reactflow.getNode(id)!;
+      const width = size[0] + PADDING * 2;
+      const height = size[1] + PADDING * 2;
 
-        return node;
-      })
-    );
-  };
+      if (node.style?.width) {
+        node.style.width = width;
+      }
+      if (node.style?.height) {
+        node.style.height = height;
+      }
+      reactflow.updateNode(id, {
+        style: { ...node.style, width, height },
+        data: {
+          ...node.data,
+          html,
+        },
+      });
+    },
+    [reactflow, id]
+  );
 
   return (
-    <>
-      <NodeResizer keepAspectRatio={shiftKeyPressed} isVisible={selected} />
+    <div className={styles.wrap}>
+      <NodeResizer
+        keepAspectRatio={shiftKeyPressed}
+        color="rgba(102, 152, 255, 0.6)"
+        isVisible={selected}
+      />
 
       <div style={{ width, height }}>
-        <TextEditor value={html} onChange={onTextChange} />
+        <TextEditor value={html} onChange={onChange} />
       </div>
 
       <Handle
@@ -106,6 +120,6 @@ export function TextNode({ id, selected, data }: NodeProps<ITextNode>) {
         type="source"
         position={Position.Left}
       />
-    </>
+    </div>
   );
 }

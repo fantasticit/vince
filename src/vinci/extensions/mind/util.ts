@@ -1,15 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Edge, Position } from "@xyflow/react";
-import { flextree } from "d3-flextree";
+import { Edge, Node, Position, ReactFlowInstance } from "@xyflow/react";
 import { arrayToTree } from "performant-array-to-tree";
+import { unionWith } from "lodash";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+import { flextree } from "./layout/d3-flextree.js";
+import { getBranchColor } from "./theme";
 
 import { IVinceMindNode } from "./type";
 
-export const getMindRoot = (
-  nodes: IVinceMindNode[],
-  node: IVinceMindNode
-): IVinceMindNode => {
-  let result: IVinceMindNode = node;
+export const getMindRoot = (nodes: Node[], node: Node): Node => {
+  let result: Node = node;
   let parentId: string;
 
   do {
@@ -22,17 +23,14 @@ export const getMindRoot = (
   return result;
 };
 
-export const getMindChildren = (
-  nodes: IVinceMindNode[],
-  rootNode: IVinceMindNode
-): IVinceMindNode[] => {
-  const minds: Record<string, IVinceMindNode[]> = {};
+export const getMindChildren = (nodes: Node[], rootNode: Node): Node[] => {
+  const minds: Record<string, Node[]> = {};
 
   nodes.forEach((node) => {
     if (node.type !== "mind") return;
-    const root = getMindRoot(nodes as IVinceMindNode[], node as IVinceMindNode);
+    const root = getMindRoot(nodes as Node[], node as Node);
     minds[root.id] ||= [];
-    minds[root.id].push(node as IVinceMindNode);
+    minds[root.id].push(node as Node);
   });
 
   return minds[rootNode.id];
@@ -55,31 +53,65 @@ export const doLayout = (
         d?.data?.data?.measured?.width || d?.data?.data?.style?.width,
       ];
     },
-    spacing: (nodeA, nodeB) => nodeA.path(nodeB).length,
+    spacing: () => 2,
   });
   const flexNode = layout.hierarchy(tree);
   layout(flexNode);
 
-  flexNode.each((node) => {
-    if (node.hasChildren) {
-      node.children!.forEach((child: any) => {
-        edges.push({
-          id: `${node.data.data.id}-${child.data.data.id}`,
-          source: node.data.data.id,
-          target: child.data.data.id,
-          sourceHandle: Position.Right,
-          targetHandle: Position.Left,
-        });
+  flexNode.each((node: any, index: number) => {
+    if (!node.parent) return;
+
+    if (node.depth === 1) {
+      const color = getBranchColor(index);
+      node.data.data.data.stroke = color;
+    } else {
+      node.data.data.data.stroke = node.parent.data.data.data.stroke;
+    }
+
+    if (node.parent) {
+      edges.push({
+        id: `${node.parent.data.data.id}-${node.data.data.id}`,
+        source: node.parent.data.data.id,
+        target: node.data.data.id,
+        sourceHandle: Position.Right,
+        targetHandle: Position.Left,
+        style: {
+          stroke: node.data.data.data.stroke,
+        },
       });
     }
 
-    if (node.data.data.id === rootNode.id) {
-      // echo
-    } else {
-      node.data.data.position.y =
-        node.x + node.right + rootNode.data.originPosition.y;
-      node.data.data.position.x =
-        node.y + node.bottom + +rootNode.data.originPosition.x;
-    }
+    node.data.data.position.y =
+      node.x + node.right + rootNode.data.originPosition.y;
+    node.data.data.position.x =
+      node.y + node.bottom + +rootNode.data.originPosition.x;
   });
+};
+
+export const patchNodeLayout = (reactflow: ReactFlowInstance, node: Node) => {
+  const nodes = reactflow.getNodes();
+  const edges = reactflow.getEdges();
+  const rootNode = node.data.isRoot ? node : getMindRoot(nodes, node);
+
+  const mindEdges: Edge[] = [];
+  const mindNodes = [
+    rootNode as IVinceMindNode,
+    ...getMindChildren(nodes as IVinceMindNode[], rootNode as IVinceMindNode),
+  ] as IVinceMindNode[];
+
+  doLayout(rootNode as IVinceMindNode, mindNodes, mindEdges);
+
+  const newNodes = unionWith(
+    mindNodes,
+    nodes,
+    (node1, node2) => node1.id === node2.id
+  );
+  const newEdges = unionWith(
+    mindEdges,
+    edges,
+    (edge1, edge2) => edge1.id === edge2.id
+  );
+
+  reactflow.setNodes(newNodes);
+  reactflow.setEdges(newEdges);
 };

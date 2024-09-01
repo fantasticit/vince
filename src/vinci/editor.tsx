@@ -5,6 +5,7 @@ import {
   Controls,
   useReactFlow,
   ReactFlowProvider,
+  MiniMap,
 } from "@xyflow/react";
 import {
   DragEventHandler,
@@ -15,6 +16,8 @@ import {
 } from "react";
 
 import "@xyflow/react/dist/style.css";
+
+import "./style.scss";
 
 import { createVinceStore, type VinceStore } from "./store";
 import { Extension, ExtensionManager } from "./extension-manager";
@@ -41,7 +44,8 @@ export function InnerEditor() {
   const [extensionManager] = useState(
     () => new ExtensionManager(reactflow, extensions)
   );
-  const doLayout = useAutoLayout(extensionManager);
+
+  useAutoLayout(extensionManager);
 
   const onDragOver = (evt: DragEvent<HTMLDivElement>) => {
     evt.preventDefault();
@@ -67,29 +71,16 @@ export function InnerEditor() {
         nodeTypes={extensionManager.nodeTypes}
         nodes={vinceStore.nodes}
         edges={vinceStore.edges}
-        onNodesChange={(changes) => {
-          console.log("change", changes);
-          vinceStore.onNodesChange(changes);
-
-          const shouldDoLayout = changes.some((change) => {
-            if ("id" in change) {
-              if (reactflow.getNode(change.id)?.type !== "mind") return false;
-              // if (change.type === "position" && !change.dragging) return true;
-              if (change.type === "dimensions") return true;
-            }
-
-            return false;
-          });
-
-          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-          shouldDoLayout && doLayout();
-        }}
+        onNodesChange={vinceStore.onNodesChange}
         onEdgesChange={vinceStore.onEdgesChange}
         onConnect={vinceStore.onConnect}
         proOptions={{ hideAttribution: true }}
         onDragOver={onDragOver}
         onDrop={onDrop}
         onClick={onClick}
+        onNodeDoubleClick={(e, node) =>
+          extensionManager.onNodeDoubleClick(e, node)
+        }
         onNodeDragStart={(e, node, nodes) =>
           extensionManager.onNodeDragStart(e, node, nodes)
         }
@@ -105,6 +96,7 @@ export function InnerEditor() {
         <Background />
         <Controls />
         <Toolbar />
+        <MiniMap />
       </ReactFlow>
     </div>
   );

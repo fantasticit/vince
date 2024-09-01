@@ -13,6 +13,9 @@ import { TextEditor } from "../../../components/text-editor";
 
 import { ShapeRenderer, ShapeRendererType } from "../shapes";
 
+import styles from "./index.module.scss";
+import { useCallback } from "react";
+
 export type IShapeNode = Node<{
   type: ShapeRendererType;
   color: string;
@@ -27,30 +30,38 @@ function useNodeDimensions(id: string) {
   };
 }
 
+const PADDING = 5;
+
 export function ShapeNode({ id, selected, data }: NodeProps<IShapeNode>) {
   const { color, type } = data;
   const { width, height } = useNodeDimensions(id);
-  const { setNodes } = useReactFlow();
   const shiftKeyPressed = useKeyPress("Shift");
   const handleStyle = { backgroundColor: color };
 
-  const onTextChange = (html: string) => {
-    setNodes((nodes) =>
-      nodes.map((node) => {
-        if (node.id === id) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              html,
-            },
-          };
-        }
+  const reactflow = useReactFlow();
 
-        return node;
-      })
-    );
-  };
+  const onChange = useCallback(
+    (html: string, size: [number, number]) => {
+      const node = reactflow.getNode(id)!;
+      const width = size[0] + PADDING * 2;
+      const height = size[1] + PADDING * 2;
+
+      if (node.style?.width) {
+        node.style.width = width;
+      }
+      if (node.style?.height) {
+        node.style.height = height;
+      }
+      reactflow.updateNode(id, {
+        style: { ...node.style, width, height },
+        data: {
+          ...node.data,
+          html,
+        },
+      });
+    },
+    [reactflow, id]
+  );
 
   return (
     <>
@@ -69,7 +80,9 @@ export function ShapeNode({ id, selected, data }: NodeProps<IShapeNode>) {
         stroke={color}
         fillOpacity={0.8}
       />
-      <TextEditor value={data.html} onChange={onTextChange} />
+      <div className={styles.editorWrap}>
+        <TextEditor value={data.html} onChange={onChange} />
+      </div>
 
       <Handle
         style={handleStyle}

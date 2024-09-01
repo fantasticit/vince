@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Edge, NodeTypes, ReactFlowInstance } from "@xyflow/react";
+import { Edge, Node, NodeTypes, ReactFlowInstance } from "@xyflow/react";
 import { Extension } from "./extension";
 import { IPlugin } from "./type";
 
@@ -58,6 +58,10 @@ export class ExtensionManager {
 
   handleClick(evt: React.MouseEvent) {
     return this.runPlugin("breakOnTrue", "handleClick", evt);
+  }
+
+  onNodeDoubleClick(event: React.MouseEvent, node: Node) {
+    return this.runPlugin("breakOnTrue", "onNodeDoubleClick", event, node);
   }
 
   onNodeDragStart(event: React.MouseEvent, node: Node, nodes: Node[]) {

@@ -30,8 +30,6 @@ export function useAutoLayout(extensionManager: ExtensionManager) {
 
     const nodes = cloneDeep([...elements.nodeMap.values()]);
     const edges = cloneDeep([...elements.edgeMap.values()]);
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
     extensionManager.doLayout(nodes, edges);
     setNodes(nodes);
     setEdges(edges);
