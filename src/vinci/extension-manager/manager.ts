@@ -15,6 +15,8 @@ export class ExtensionManager {
   get nodeTypes(): NodeTypes {
     return this.extensions.reduce((memo, ext) => {
       const [type, component] = ext.getNodeType();
+      if (!type) return memo;
+
       memo[type] = component;
       return memo;
     }, {} as NodeTypes);
@@ -24,6 +26,15 @@ export class ExtensionManager {
     return this.extensions.reduce((memo, ext) => {
       return memo.concat(ext?.getPlugins?.());
     }, [] as IPlugin[]);
+  }
+
+  registerExtension(extension: Extension) {
+    const index = this.extensions.length;
+    this.extensions.push(extension);
+
+    return () => {
+      this.extensions.splice(index, 1);
+    };
   }
 
   private runPlugin<T extends `${keyof IPlugin}`>(
@@ -41,7 +52,6 @@ export class ExtensionManager {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
       done = plugin?.[pluginType]?.(this, this.reactflow, ...callArgs);
-      console.log(pluginType, done);
     } while (
       (type === "breakOnTrue" ? !done : true) &&
       cursor < plugins.length

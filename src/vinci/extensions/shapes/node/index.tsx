@@ -30,7 +30,7 @@ function useNodeDimensions(id: string) {
   };
 }
 
-const PADDING = 5;
+// const PADDING = 5;
 
 export function ShapeNode({ id, selected, data }: NodeProps<IShapeNode>) {
   const { color, type } = data;
@@ -41,19 +41,19 @@ export function ShapeNode({ id, selected, data }: NodeProps<IShapeNode>) {
   const reactflow = useReactFlow();
 
   const onChange = useCallback(
-    (html: string, size: [number, number]) => {
+    (html: string) => {
       const node = reactflow.getNode(id)!;
-      const width = size[0] + PADDING * 2;
-      const height = size[1] + PADDING * 2;
+      // const width = size[0] + PADDING * 2;
+      // const height = size[1] + PADDING * 2;
 
-      if (node.style?.width) {
-        node.style.width = width;
-      }
-      if (node.style?.height) {
-        node.style.height = height;
-      }
+      // if (node.style?.width) {
+      //   node.style.width = width;
+      // }
+      // if (node.style?.height) {
+      //   node.style.height = height;
+      // }
       reactflow.updateNode(id, {
-        style: { ...node.style, width, height },
+        // style: { ...node.style, width, height },
         data: {
           ...node.data,
           html,

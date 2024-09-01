@@ -3,12 +3,16 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect } from "react";
 
+import { Extension, useExtensionManager } from "../../extension-manager";
+
 import styles from "./index.module.scss";
 
 export const Tiptap: React.FC<{
   value: string;
   onChange: (arg: string, size: [number, number]) => void;
 }> = ({ value, onChange }) => {
+  const extensionManager = useExtensionManager();
+
   const $container = useRef<HTMLDivElement>(null);
   const editor = useEditor({
     extensions: [StarterKit],
@@ -36,6 +40,36 @@ export const Tiptap: React.FC<{
 
     return () => editor.off("update", handler);
   }, [editor, onChange]);
+
+  useEffect(() => {
+    const remove = extensionManager.registerExtension(
+      Extension.create({
+        name: "text-editor",
+        addPlugins() {
+          return [
+            {
+              handleClick(_, __, e) {
+                if (
+                  $container.current &&
+                  !$container.current.contains(e.target as HTMLElement)
+                ) {
+                  editor?.commands?.blur();
+                }
+
+                return false;
+              },
+              onNodeDragStart() {
+                editor?.commands?.blur();
+                return false;
+              },
+            },
+          ];
+        },
+      })
+    );
+
+    return remove;
+  }, [editor, extensionManager]);
 
   return (
     <div ref={$container} style={{ boxSizing: "content-box", minWidth: 16 }}>

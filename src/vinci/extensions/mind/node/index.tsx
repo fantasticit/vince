@@ -20,7 +20,6 @@ import styles from "./index.module.scss";
 
 function useNodeDimensions(id: string) {
   const node = useStore((state) => state.nodeLookup.get(id));
-  console.log(node);
   return {
     width: node?.style?.width || node?.measured?.width || 0,
     height: node?.style?.height || node?.measured?.height || 0,

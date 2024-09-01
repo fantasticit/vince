@@ -6,16 +6,14 @@ import {
   OnConnect,
 } from "@xyflow/react";
 
-export type VinceNode = Node;
-
 export type VinceStore = {
-  nodes: VinceNode[];
+  nodes: Node[];
   edges: Edge[];
-  onNodesChange: OnNodesChange<VinceNode>;
+  onNodesChange: OnNodesChange<Node>;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
-  setNodes: (nodes: VinceNode[]) => void;
+  setNodes: (nodes: Node[]) => void;
   setEdges: (edges: Edge[]) => void;
 
-  addNode: (node: VinceNode) => void;
+  addNode: (node: Node) => void;
 };

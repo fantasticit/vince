@@ -64,7 +64,7 @@ export interface IPlugin {
 export interface IExtensionConfig {
   name: string;
 
-  addNode: () => ComponentType<
+  addNode?: () => ComponentType<
     NodeProps & {
       data: any;
       type: any;

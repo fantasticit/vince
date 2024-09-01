@@ -12,7 +12,7 @@ export const Shape = Extension.create({
     return [
       {
         key: "shape",
-        handleDrop(extensionManager, reactflow, evt) {
+        handleDrop(_, reactflow, evt) {
           const type = evt.dataTransfer?.getData("vince/drop-to-add-shape");
 
           if (type) {
@@ -32,7 +32,16 @@ export const Shape = Extension.create({
               },
               selected: true,
             };
-            reactflow.addNodes(node);
+            const nodes = reactflow.getNodes();
+            reactflow.setNodes([
+              ...nodes.map((node) => {
+                return {
+                  ...node,
+                  selected: false,
+                };
+              }),
+              node,
+            ]);
             return true;
           }
 

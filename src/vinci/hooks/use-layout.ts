@@ -50,10 +50,6 @@ export function useAutoLayout(extensionManager: ExtensionManager) {
     doLayout();
   }, [nodesInitialized, doLayout, elements.nodeMap.size]);
 
-  useEffect(() => {
-    console.log(elements.nodes, elements.edges);
-  }, [elements.nodes, elements.edges]);
-
   return doLayout;
 }
 

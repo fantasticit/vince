@@ -12,16 +12,20 @@ export class Extension {
     this.config = config;
   }
 
-  getNodeType(): [
-    string,
-    ComponentType<
-      NodeProps & {
-        data: any;
-        type: any;
-      }
-    >
-  ] {
-    return [this.config.name, this.config.addNode()];
+  getNodeType():
+    | [
+        string,
+        ComponentType<
+          NodeProps & {
+            data: any;
+            type: any;
+          }
+        >
+      ]
+    | [null, null] {
+    return this.config.addNode
+      ? [this.config.name, this.config.addNode?.()]
+      : [null, null];
   }
 
   getPlugins() {
